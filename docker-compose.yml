@@ -124,7 +124,7 @@ services:
       - openwebui_storage:/app/open-webui/data
       - openwebui_models:/app/open-webui/models
     environment:
-      - OLLAMA_HOST=http://taz.infra.ori3com.cloud:11434
+      - OLLAMA_HOST=${OLLAMA_HOST:-ollama:11434}
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
     depends_on:
@@ -162,7 +162,7 @@ services:
       - ollama_storage:/root/.ollama
     entrypoint: /bin/sh
     environment:
-      - OLLAMA_HOST=http://taz.infra.ori3com.cloud:11434
+      - OLLAMA_HOST=${OLLAMA_HOST:-ollama:11434}
     command:
       - "-c"
       - |
@@ -184,7 +184,7 @@ services:
       - ollama_storage:/root/.ollama
     entrypoint: /bin/sh
     environment:
-      - OLLAMA_HOST=http://taz.infra.ori3com.cloud:11434
+      - OLLAMA_HOST=${OLLAMA_HOST:-ollama:11434}
     command:
       - "-c"
       - |
@@ -206,7 +206,7 @@ services:
       - ollama_storage:/root/.ollama
     entrypoint: /bin/sh
     environment:
-      - OLLAMA_HOST=http://taz.infra.ori3com.cloud:11434
+      - OLLAMA_HOST=${OLLAMA_HOST:-ollama:11434}
     command:
       - "-c"
       - |
