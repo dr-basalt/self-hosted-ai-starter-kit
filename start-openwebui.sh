@@ -6,9 +6,8 @@ echo "Démarrage d'OpenWebUI avec mémoire et STT/TTS..."
 
 # Configuration automatique d'OpenWebUI
 echo "Configuration automatique d'OpenWebUI..."
-# Attendre que la base de données soit créée
-sleep 10
-python3 /app/configure-openwebui.py
+# Les paramètres sont maintenant configurés via les variables d'environnement
+echo "✅ Paramètres STT/TTS configurés via variables d'environnement"
 
 # Démarrer l'API de mémoire en arrière-plan
 echo "Démarrage de l'API de mémoire..."

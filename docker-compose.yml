@@ -131,7 +131,10 @@ services:
       # Configuration STT/TTS
       - USER_PERMISSIONS_CHAT_STT=True
       - USER_PERMISSIONS_CHAT_TTS=True
+      - USER_PERMISSIONS_CHAT_CALL=True
       - AUDIO_STT_ENGINE=whisper
+      - AUDIO_STT_MODEL=base
+      - AUDIO_STT_SUPPORTED_CONTENT_TYPES=audio/wav,audio/mp3,audio/m4a,audio/webm
       - AUDIO_TTS_ENGINE=openai
       - AUDIO_TTS_MODEL=tts-1
       - AUDIO_TTS_VOICE=alloy
@@ -140,6 +143,15 @@ services:
       - ENABLE_HTTPS=true
       - SSL_CERT_FILE=/app/certs/cert.pem
       - SSL_KEY_FILE=/app/certs/key.pem
+      # Configuration CORS pour HTTPS
+      - CORS_ALLOW_ORIGIN=*
+      - CORS_ALLOW_CREDENTIALS=true
+      # Configuration générale
+      - ENABLE_SIGNUP=true
+      - ENABLE_LOGIN_FORM=true
+      - ENABLE_OAUTH_GOOGLE=false
+      - ENABLE_OAUTH_GITHUB=false
+      - ENABLE_OAUTH_DISCORD=false
     depends_on:
       - qdrant
 
