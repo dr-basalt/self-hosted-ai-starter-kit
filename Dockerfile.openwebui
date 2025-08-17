@@ -1,0 +1,51 @@
+FROM python:3.11-slim
+
+# Variables d'environnement
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV OPENWEBUI_PORT=3000
+ENV MEMORY_API_PORT=5001
+
+# Installation des dépendances système
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    wget \
+    build-essential \
+    ffmpeg \
+    libsndfile1 \
+    libportaudio2 \
+    portaudio19-dev \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Création du répertoire de travail
+WORKDIR /app
+
+# Copie des fichiers de configuration
+COPY requirements.txt .
+COPY openwebui-config.yml .
+COPY openwebui-memory.py .
+
+# Installation des dépendances Python
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Installation d'OpenWebUI
+RUN git clone https://github.com/open-webui/open-webui.git /app/open-webui
+WORKDIR /app/open-webui
+
+# Installation des dépendances OpenWebUI
+RUN pip install -r requirements.txt
+
+# Configuration d'OpenWebUI
+COPY ../openwebui-config.yml /app/open-webui/data/config.yml
+
+# Script de démarrage
+COPY ../start-openwebui.sh /app/start-openwebui.sh
+RUN chmod +x /app/start-openwebui.sh
+
+# Exposition des ports
+EXPOSE 3000 5001
+
+# Point d'entrée
+ENTRYPOINT ["/app/start-openwebui.sh"]

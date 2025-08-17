@@ -1,0 +1,53 @@
+# Configuration OpenWebUI
+# Modèles LLM disponibles
+models:
+  - name: "tinyllama:1.1b-chat"
+    display_name: "TinyLlama 1.1B Chat"
+    description: "Modèle léger pour conversations rapides"
+    default: false
+    
+  - name: "phi3:3.8b"
+    display_name: "Phi-3 3.8B"
+    description: "Modèle par défaut - équilibré performance/rapidité"
+    default: true
+    
+  - name: "qwen2.5:3b-instruct"
+    display_name: "Qwen 2.5 3B Instruct"
+    description: "Modèle instruct optimisé pour les tâches"
+    default: false
+    
+  - name: "llama3.2:latest"
+    display_name: "Llama 3.2 Latest"
+    description: "Dernière version de Llama 3.2"
+    default: false
+    
+  - name: "gemma2:2b"
+    display_name: "Gemma 2 2B"
+    description: "Modèle Gemma 2 léger"
+    default: false
+
+# Configuration STT (Speech-to-Text)
+stt:
+  provider: "faster-whisper"
+  model: "base"
+  device: "cpu"
+  compute_type: "int8"
+  language: "fr"
+
+# Configuration TTS (Text-to-Speech)
+tts:
+  provider: "coqui-tts"
+  model: "tts_models/fr/css10/vits"
+  voice: "default"
+
+# Configuration Ollama
+ollama:
+  host: "http://taz.infra.ori3com.cloud:11434"
+  timeout: 120
+
+# Configuration Qdrant pour la mémoire
+qdrant:
+  host: "qdrant"
+  port: 6333
+  collection_name: "openwebui_memory"
+  embedding_model: "nomic-embed-text"
