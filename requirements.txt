@@ -10,10 +10,10 @@ faster-whisper==0.9.0
 torch==2.1.0
 torchaudio==2.1.0
 
-# Dépendances pour les embeddings (désactivées temporairement)
-# transformers==4.35.0
-# tokenizers>=0.13,<0.15
-# sentence-transformers==2.2.2
+# Dépendances pour les embeddings
+transformers==4.35.0
+tokenizers>=0.13,<0.15
+sentence-transformers==2.2.2
 
 # Dépendances pour l'API
 fastapi==0.104.1
