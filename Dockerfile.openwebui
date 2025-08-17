@@ -8,10 +8,11 @@ ENV MEMORY_API_PORT=5001
 
 # Installation des dépendances système
 RUN apt-get update && apt-get install -y \
+    curl \
     git \
     curl \
     wget \
-    build-essential \
+    build-essential curl \
     ffmpeg \
     libsndfile1 \
     libportaudio2 \
@@ -35,7 +36,6 @@ RUN git clone https://github.com/open-webui/open-webui.git /app/open-webui
 WORKDIR /app/open-webui
 
 # Installation des dépendances OpenWebUI
-RUN pip install -r requirements.txt
 
 # Configuration d'OpenWebUI
 COPY ../openwebui-config.yml /app/open-webui/data/config.yml

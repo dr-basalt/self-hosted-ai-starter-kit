@@ -14,8 +14,8 @@ sleep 5
 
 # Démarrer OpenWebUI
 echo "Démarrage d'OpenWebUI..."
-cd /app/open-webui
-python3 -m uvicorn app.main:app --host 0.0.0.0 --port 3000
+cd /app/open-webui/backend
+python3 -m uvicorn open_webui.main:app --host 0.0.0.0 --port 3000
 
 # Attendre la fin des processus
 wait $MEMORY_PID
