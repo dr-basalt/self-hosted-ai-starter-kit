@@ -6,6 +6,8 @@ echo "Démarrage d'OpenWebUI avec mémoire et STT/TTS..."
 
 # Configuration automatique d'OpenWebUI
 echo "Configuration automatique d'OpenWebUI..."
+# Attendre que la base de données soit créée
+sleep 10
 python3 /app/configure-openwebui.py
 
 # Démarrer l'API de mémoire en arrière-plan
