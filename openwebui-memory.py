@@ -184,7 +184,7 @@ class OpenWebUIMemory:
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
-memory = OpenWebUIMemory()
+memory = OpenWebUIMemory(qdrant_host="qdrant")
 
 @app.route('/memory/save', methods=['POST'])
 def save_conversation():
