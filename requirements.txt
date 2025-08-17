@@ -10,9 +10,9 @@ faster-whisper==0.9.0
 torch==2.1.0
 torchaudio==2.1.0
 
-# Dépendances pour les embeddings
-transformers==4.35.0
-tokenizers>=0.13,<0.15
+# Dépendances pour les embeddings (versions compatibles)
+transformers==4.30.0
+tokenizers==0.13.3
 sentence-transformers==2.2.2
 
 # Dépendances pour l'API
@@ -22,3 +22,4 @@ pydantic==2.5.0
 
 # Dépendances pour le monitoring
 psutil==5.9.6
+typer==0.9.0
