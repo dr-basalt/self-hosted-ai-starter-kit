@@ -38,6 +38,14 @@ WORKDIR /app/open-webui
 # Installation des dépendances OpenWebUI
 RUN pip install --no-cache-dir -r /app/open-webui/backend/requirements.txt
 
+# Installation de Node.js et npm pour construire le frontend
+RUN apt-get update && apt-get install -y nodejs npm
+
+# Construction du frontend
+WORKDIR /app/open-webui
+RUN npm install
+RUN npm run build
+
 # Configuration d'OpenWebUI
 COPY ../openwebui-config.yml /app/open-webui/data/config.yml
 
