@@ -36,6 +36,7 @@ RUN git clone https://github.com/open-webui/open-webui.git /app/open-webui
 WORKDIR /app/open-webui
 
 # Installation des dépendances OpenWebUI
+RUN pip install --no-cache-dir -r /app/open-webui/backend/requirements.txt
 
 # Configuration d'OpenWebUI
 COPY ../openwebui-config.yml /app/open-webui/data/config.yml
