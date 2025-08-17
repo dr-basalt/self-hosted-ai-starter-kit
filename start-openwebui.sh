@@ -19,7 +19,7 @@ echo "API de mémoire désactivée temporairement pour éviter les conflits de d
 # Démarrer OpenWebUI
 echo "Démarrage d'OpenWebUI..."
 cd /app/open-webui/backend
-python3 -m uvicorn open_webui.main:app --host 0.0.0.0 --port 3000
+python3 -m uvicorn open_webui.main:app --host 0.0.0.0 --port 3000 --ssl-certfile /app/certs/cert.pem --ssl-keyfile /app/certs/key.pem
 
 # Attendre la fin des processus
 # wait $MEMORY_PID
