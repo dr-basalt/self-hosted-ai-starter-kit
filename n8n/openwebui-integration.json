@@ -1,0 +1,162 @@
+{
+  "name": "OpenWebUI Integration",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "openwebui-chat",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraire les données de la requête\nconst { message, session_id, model = 'phi3:3.8b' } = $input.first().json;\n\n// Préparer la requête pour OpenWebUI\nconst openwebuiRequest = {\n  message: message,\n  model: model,\n  session_id: session_id || `session_${Date.now()}`,\n  stream: false\n};\n\nreturn { json: openwebuiRequest };"
+      },
+      "id": "prepare-request",
+      "name": "Prepare Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://openwebui:3000/api/v1/chat",
+        "authentication": "none",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "call-openwebui",
+      "name": "Call OpenWebUI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraire la réponse d'OpenWebUI\nconst openwebuiResponse = $input.first().json;\nconst originalRequest = $('Prepare Request').first().json;\n\n// Préparer les données pour la mémoire\nconst memoryData = {\n  user_message: originalRequest.message,\n  ai_response: openwebuiResponse.response || openwebuiResponse.message,\n  model_used: originalRequest.model,\n  session_id: originalRequest.session_id\n};\n\nreturn { json: memoryData };"
+      },
+      "id": "prepare-memory",
+      "name": "Prepare Memory",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://openwebui:5001/memory/save",
+        "authentication": "none",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "save-memory",
+      "name": "Save to Memory",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"response\": $('Call OpenWebUI').first().json.response || $('Call OpenWebUI').first().json.message,\n  \"session_id\": $('Prepare Request').first().json.session_id,\n  \"model_used\": $('Prepare Request').first().json.model,\n  \"memory_saved\": $('Save to Memory').first().json.success\n}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Request": {
+      "main": [
+        [
+          {
+            "node": "Call OpenWebUI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call OpenWebUI": {
+      "main": [
+        [
+          {
+            "node": "Prepare Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Memory": {
+      "main": [
+        [
+          {
+            "node": "Save to Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Memory": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1"
+}
