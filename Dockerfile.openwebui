@@ -38,8 +38,8 @@ WORKDIR /app/open-webui
 # Installation des dépendances OpenWebUI
 RUN pip install --no-cache-dir -r /app/open-webui/backend/requirements.txt
 
-# Installation des dépendances audio pour STT/TTS
-RUN pip install --no-cache-dir pydub faster-whisper openai-whisper
+# Installation des dépendances audio pour STT/TTS (désactivées temporairement)
+# RUN pip install --no-cache-dir pydub faster-whisper openai-whisper
 
 # Installation de Node.js et npm pour construire le frontend
 RUN apt-get update && apt-get install -y nodejs npm ffmpeg
