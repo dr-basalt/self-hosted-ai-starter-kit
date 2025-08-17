@@ -43,7 +43,7 @@ RUN apt-get update && apt-get install -y nodejs npm
 
 # Construction du frontend
 WORKDIR /app/open-webui
-RUN npm install
+RUN npm install --legacy-peer-deps
 RUN npm run build
 
 # Configuration d'OpenWebUI
