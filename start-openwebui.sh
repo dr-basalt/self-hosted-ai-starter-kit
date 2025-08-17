@@ -6,8 +6,7 @@ echo "Démarrage d'OpenWebUI avec mémoire et STT/TTS..."
 
 # Configuration automatique d'OpenWebUI
 echo "Configuration automatique d'OpenWebUI..."
-# Les paramètres sont maintenant configurés via les variables d'environnement
-echo "✅ Paramètres STT/TTS configurés via variables d'environnement"
+echo "✅ Configuration simplifiée - mode vocal à configurer via l'interface web"
 
 # Démarrer l'API de mémoire en arrière-plan (désactivée temporairement)
 echo "API de mémoire désactivée temporairement pour éviter les conflits de dépendances..."
@@ -20,7 +19,7 @@ echo "API de mémoire désactivée temporairement pour éviter les conflits de d
 # Démarrer OpenWebUI
 echo "Démarrage d'OpenWebUI..."
 cd /app/open-webui/backend
-python3 -m uvicorn open_webui.main:app --host 0.0.0.0 --port 3000 --ssl-certfile /app/certs/cert.pem --ssl-keyfile /app/certs/key.pem
+python3 -m uvicorn open_webui.main:app --host 0.0.0.0 --port 3000
 
 # Attendre la fin des processus
 # wait $MEMORY_PID
