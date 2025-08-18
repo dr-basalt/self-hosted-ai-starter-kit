@@ -1,235 +1,292 @@
-# Self-hosted AI starter kit
+# Self-Hosted AI Starter Kit
 
-**Self-hosted AI Starter Kit** is an open-source Docker Compose template designed to swiftly initialize a comprehensive local AI and low-code development environment.
+🚀 **Kit de démarrage complet pour l'IA auto-hébergée** avec OpenWebUI, Ollama, Qdrant, N8N et PostgreSQL.
 
-![n8n.io - Screenshot](https://raw.githubusercontent.com/n8n-io/self-hosted-ai-starter-kit/main/assets/n8n-demo.gif)
+## ✨ Fonctionnalités
 
-Curated by <https://github.com/n8n-io>, it combines the self-hosted n8n
-platform with a curated list of compatible AI products and components to
-quickly get started with building self-hosted AI workflows.
+- **🤖 OpenWebUI Bundle** : Interface web moderne pour interagir avec les LLMs
+- **🧠 Mémoire persistante** : Stockage vectoriel avec Qdrant et séparateur tenant `<email>:`
+- **🎤 STT/TTS OpenAI** : Reconnaissance et synthèse vocale via API OpenAI
+- **🔐 HTTPS Let's Encrypt** : Certificats SSL automatiques
+- **📊 Persistance complète** : Toutes les données sauvegardées dans des volumes Docker
+- **⚡ Modèles optimisés** : Configuration automatique des paramètres pour Llama2, Phi-3, Gemma2
+- **🔧 N8N** : Automatisation des workflows
+- **🗄️ PostgreSQL** : Base de données relationnelle
 
-> [!TIP]
-> [Read the announcement](https://blog.n8n.io/self-hosted-ai/)
+## 🚀 Installation rapide
 
-### What’s included
+### Prérequis
+- Docker et Docker Compose v2
+- Python 3.8+
+- Domaine configuré (pour Let's Encrypt)
 
-✅ [**Self-hosted n8n**](https://n8n.io/) - Low-code platform with over 400
-integrations and advanced AI components
-
-✅ [**Ollama**](https://ollama.com/) - Cross-platform LLM platform to install
-and run the latest local LLMs
-
-✅ [**Qdrant**](https://qdrant.tech/) - Open-source, high performance vector
-store with an comprehensive API
-
-✅ [**PostgreSQL**](https://www.postgresql.org/) -  Workhorse of the Data
-Engineering world, handles large amounts of data safely.
-
-### What you can build
-
-⭐️ **AI Agents** for scheduling appointments
-
-⭐️ **Summarize Company PDFs** securely without data leaks
-
-⭐️ **Smarter Slack Bots** for enhanced company communications and IT operations
-
-⭐️ **Private Financial Document Analysis** at minimal cost
-
-## Installation
-
-### Cloning the Repository
-
+### 1. Cloner le repository
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
+git clone https://github.com/dr-basalt/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
 ```
 
-### Running n8n using Docker Compose
+### 2. Configuration initiale
+```bash
+# Configuration complète avec CPU
+./launcher.sh cpu --setup --configure --letsencrypt
 
-#### For Nvidia GPU users
+# Ou étape par étape
+./launcher.sh cpu --setup
+./launcher.sh cpu --configure
+./launcher.sh cpu --letsencrypt
+```
+
+### 3. Configuration des variables d'environnement
+```bash
+cp env.example .env
+# Éditer .env avec vos clés API et domaines
+```
+
+## 📋 Configuration
+
+### Variables d'environnement importantes
 
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
-cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
-docker compose --profile gpu-nvidia up
+# OpenAI API (requis pour STT/TTS)
+OPENAI_API_KEY=your-openai-api-key-here
+
+# Let's Encrypt
+LETSENCRYPT_EMAIL=admin@votre-domaine.com
+LETSENCRYPT_DOMAIN=votre-domaine.com
+
+# Sécurité
+WEBUI_SECRET_KEY=your-secret-key-here
 ```
 
-> [!NOTE]
-> If you have not used your Nvidia GPU with Docker before, please follow the
-> [Ollama Docker instructions](https://github.com/ollama/ollama/blob/main/docs/docker.md).
+### Profils disponibles
 
-### For AMD GPU users on Linux
+- **CPU** : `./launcher.sh cpu` - Pour serveurs sans GPU
+- **GPU NVIDIA** : `./launcher.sh gpu` - Pour serveurs avec GPU NVIDIA
+- **GPU AMD** : `./launcher.sh gpu-amd` - Pour serveurs avec GPU AMD
 
+## 🏗️ Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   OpenWebUI     │    │     Ollama      │    │     Qdrant      │
+│   (Bundle)      │◄──►│   (LLM API)     │    │  (Vector DB)    │
+│   Port: 3000    │    │   Port: 11434   │    │   Port: 6333    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│      N8N        │    │   PostgreSQL    │    │   Let's Encrypt │
+│  (Workflows)    │    │   (Database)    │    │   (SSL Certs)   │
+│   Port: 5678    │    │   Port: 5432    │    │   Auto-renewal  │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+## 🧠 Mémoire et Embeddings
+
+### Configuration automatique
+- **Modèle d'embedding** : `all-MiniLM-L6-v2` (optimisé pour la performance)
+- **Séparateur tenant** : `:` (format: `<email>:contenu`)
+- **Collection Qdrant** : `openwebui_memory`
+- **Seuil de similarité** : 0.7
+- **Résultats max** : 10
+
+### Exemple d'utilisation
+```python
+# Les conversations sont automatiquement vectorisées
+# avec le format: user@example.com:contenu du message
+# Permettant l'isolation des données par utilisateur
+```
+
+## 🎤 Configuration STT/TTS
+
+### OpenAI API (recommandé)
+- **STT** : Whisper-1 pour la reconnaissance vocale
+- **TTS** : TTS-1 avec voix "alloy"
+- **Formats supportés** : WAV, MP3, M4A, WebM
+
+### Configuration automatique
+Le script `configure-models.py` configure automatiquement :
+- Les paramètres optimisés pour chaque modèle
+- Les templates de prompts
+- Les séquences d'arrêt
+- Les permissions utilisateur
+
+## 🔐 Sécurité HTTPS
+
+### Let's Encrypt automatique
+- **Certificats SSL** : Génération automatique
+- **Renouvellement** : Tous les jours à 12h00
+- **Domaine** : Configurable via `LETSENCRYPT_DOMAIN`
+- **Email** : Configurable via `LETSENCRYPT_EMAIL`
+
+### Installation manuelle
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
-cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
-docker compose --profile gpu-amd up
+./setup-letsencrypt.sh votre-domaine.com votre-email@domaine.com
 ```
 
-#### For Mac / Apple Silicon users
+## 📊 Persistance des données
 
-If you’re using a Mac with an M1 or newer processor, you can't expose your GPU
-to the Docker instance, unfortunately. There are two options in this case:
+### Volumes Docker
+- `openwebui_data` : Données utilisateur et conversations
+- `openwebui_uploads` : Fichiers uploadés
+- `openwebui_logs` : Logs d'application
+- `qdrant_data` : Base vectorielle
+- `ollama_data` : Modèles LLM
+- `postgres_data` : Base de données
+- `n8n_data` : Workflows N8N
+- `letsencrypt_certs` : Certificats SSL
 
-1. Run the starter kit fully on CPU, like in the section "For everyone else"
-   below
-2. Run Ollama on your Mac for faster inference, and connect to that from the
-   n8n instance
-
-If you want to run Ollama on your mac, check the
-[Ollama homepage](https://ollama.com/)
-for installation instructions, and run the starter kit as follows:
-
+### Sauvegarde
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
-cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
-docker compose up
+# Sauvegarder toutes les données
+docker compose down
+tar -czf backup-$(date +%Y%m%d).tar.gz \
+  $(docker volume inspect -f '{{.Mountpoint}}' \
+    openwebui_data openwebui_uploads qdrant_data \
+    ollama_data postgres_data n8n_data)
 ```
 
-##### For Mac users running OLLAMA locally
+## 🔧 Modèles LLM optimisés
 
-If you're running OLLAMA locally on your Mac (not in Docker), you need to modify the OLLAMA_HOST environment variable
+### Configuration automatique
+Le script configure automatiquement les paramètres optimisés :
 
-1. Set OLLAMA_HOST to `host.docker.internal:11434` in your .env file. 
-2. Additionally, after you see "Editor is now accessible via: <http://localhost:5678/>":
+| Modèle | Temperature | Top-P | Max Tokens | Context |
+|--------|-------------|-------|------------|---------|
+| Llama2 | 0.7 | 0.9 | 2048 | 4096 |
+| Phi-3 | 0.8 | 0.95 | 4096 | 8192 |
+| Gemma2 | 0.6 | 0.85 | 3072 | 6144 |
 
-    1. Head to <http://localhost:5678/home/credentials>
-    2. Click on "Local Ollama service"
-    3. Change the base URL to "http://host.docker.internal:11434/"
+### Templates de prompts
+- **Llama2** : `<s>[INST] {prompt} [/INST]`
+- **Phi-3** : `<|user|>\n{prompt}<|end|>\n<|assistant|>`
+- **Gemma2** : `<start_of_turn>user\n{prompt}<end_of_turn>\n<start_of_turn>model\n`
 
-#### For everyone else
+## 🚀 Commandes utiles
 
+### Gestion des services
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
-cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
-docker compose --profile cpu up
+# Démarrer tous les services
+./launcher.sh cpu
+
+# Voir les logs
+docker compose logs -f openwebui
+
+# Redémarrer un service
+docker compose restart openwebui
+
+# Arrêter tous les services
+docker compose down
+
+# Nettoyer les volumes (⚠️ supprime toutes les données)
+docker compose down -v
 ```
 
-## ⚡️ Quick start and usage
-
-The core of the Self-hosted AI Starter Kit is a Docker Compose file, pre-configured with network and storage settings, minimizing the need for additional installations.
-After completing the installation steps above, simply follow the steps below to get started.
-
-1. Open <http://localhost:5678/> in your browser to set up n8n. You’ll only
-   have to do this once.
-2. Open the included workflow:
-   <http://localhost:5678/workflow/srOnR8PAY3u4RSwb>
-3. Click the **Chat** button at the bottom of the canvas, to start running the workflow.
-4. If this is the first time you’re running the workflow, you may need to wait
-   until Ollama finishes downloading Llama3.2. You can inspect the docker
-   console logs to check on the progress.
-
-To open n8n at any time, visit <http://localhost:5678/> in your browser.
-
-With your n8n instance, you’ll have access to over 400 integrations and a
-suite of basic and advanced AI nodes such as
-[AI Agent](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent/),
-[Text classifier](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.text-classifier/),
-and [Information Extractor](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.information-extractor/)
-nodes. To keep everything local, just remember to use the Ollama node for your
-language model and Qdrant as your vector store.
-
-> [!NOTE]
-> This starter kit is designed to help you get started with self-hosted AI
-> workflows. While it’s not fully optimized for production environments, it
-> combines robust components that work well together for proof-of-concept
-> projects. You can customize it to meet your specific needs
-
-## Upgrading
-
-* ### For Nvidia GPU setups:
-
+### Configuration
 ```bash
-docker compose --profile gpu-nvidia pull
-docker compose create && docker compose --profile gpu-nvidia up
+# Configuration complète
+./launcher.sh cpu --setup --configure --letsencrypt
+
+# Configuration manuelle des modèles
+python3 configure-models.py
+
+# Configuration Let's Encrypt manuelle
+./setup-letsencrypt.sh domaine.com email@domaine.com
 ```
 
-* ### For Mac / Apple Silicon users
-
+### Monitoring
 ```bash
-docker compose pull
-docker compose create && docker compose up
+# Statut des services
+docker compose ps
+
+# Utilisation des ressources
+docker stats
+
+# Logs en temps réel
+docker compose logs -f
 ```
 
-* ### For Non-GPU setups:
+## 🔍 Dépannage
 
+### Problèmes courants
+
+#### OpenWebUI ne démarre pas
 ```bash
-docker compose --profile cpu pull
-docker compose create && docker compose --profile cpu up
+# Vérifier les logs
+docker compose logs openwebui
+
+# Vérifier la configuration
+docker compose config
+
+# Redémarrer le service
+docker compose restart openwebui
 ```
 
-## 👓 Recommended reading
+#### Problèmes de mémoire Qdrant
+```bash
+# Vérifier la connexion
+curl http://localhost:6333/health
 
-n8n is full of useful content for getting started quickly with its AI concepts
-and nodes. If you run into an issue, go to [support](#support).
+# Redémarrer Qdrant
+docker compose restart qdrant
+```
 
-- [AI agents for developers: from theory to practice with n8n](https://blog.n8n.io/ai-agents/)
-- [Tutorial: Build an AI workflow in n8n](https://docs.n8n.io/advanced-ai/intro-tutorial/)
-- [Langchain Concepts in n8n](https://docs.n8n.io/advanced-ai/langchain/langchain-n8n/)
-- [Demonstration of key differences between agents and chains](https://docs.n8n.io/advanced-ai/examples/agent-chain-comparison/)
-- [What are vector databases?](https://docs.n8n.io/advanced-ai/examples/understand-vector-databases/)
+#### Certificats Let's Encrypt
+```bash
+# Vérifier les certificats
+openssl x509 -in /app/certs/cert.pem -text -noout
 
-## 🎥 Video walkthrough
+# Renouveler manuellement
+certbot renew
+```
 
-- [Installing and using Local AI for n8n](https://www.youtube.com/watch?v=xz_X2N-hPg0)
+### Logs et debugging
+```bash
+# Logs détaillés
+docker compose logs -f --tail=100 openwebui
 
-## 🛍️ More AI templates
+# Shell dans le conteneur
+docker compose exec openwebui bash
 
-For more AI workflow ideas, visit the [**official n8n AI template
-gallery**](https://n8n.io/workflows/categories/ai/). From each workflow,
-select the **Use workflow** button to automatically import the workflow into
-your local n8n instance.
+# Vérifier les variables d'environnement
+docker compose exec openwebui env | grep -E "(OLLAMA|QDRANT|MEMORY)"
+```
 
-### Learn AI key concepts
+## 📈 Performance
 
-- [AI Agent Chat](https://n8n.io/workflows/1954-ai-agent-chat/)
-- [AI chat with any data source (using the n8n workflow too)](https://n8n.io/workflows/2026-ai-chat-with-any-data-source-using-the-n8n-workflow-tool/)
-- [Chat with OpenAI Assistant (by adding a memory)](https://n8n.io/workflows/2098-chat-with-openai-assistant-by-adding-a-memory/)
-- [Use an open-source LLM (via Hugging Face)](https://n8n.io/workflows/1980-use-an-open-source-llm-via-huggingface/)
-- [Chat with PDF docs using AI (quoting sources)](https://n8n.io/workflows/2165-chat-with-pdf-docs-using-ai-quoting-sources/)
-- [AI agent that can scrape webpages](https://n8n.io/workflows/2006-ai-agent-that-can-scrape-webpages/)
+### Recommandations système
+- **CPU** : 4+ cœurs pour les modèles de base
+- **RAM** : 8GB minimum, 16GB recommandé
+- **Stockage** : 50GB+ pour les modèles et données
+- **GPU** : Optionnel mais recommandé pour les gros modèles
 
-### Local AI templates
+### Optimisations
+- **Embeddings** : `all-MiniLM-L6-v2` (384 dimensions, rapide)
+- **Qdrant** : Indexation automatique des vecteurs
+- **Ollama** : Chargement à la demande des modèles
+- **OpenWebUI** : Bundle pré-compilé (pas de build)
 
-- [Tax Code Assistant](https://n8n.io/workflows/2341-build-a-tax-code-assistant-with-qdrant-mistralai-and-openai/)
-- [Breakdown Documents into Study Notes with MistralAI and Qdrant](https://n8n.io/workflows/2339-breakdown-documents-into-study-notes-using-templating-mistralai-and-qdrant/)
-- [Financial Documents Assistant using Qdrant and](https://n8n.io/workflows/2335-build-a-financial-documents-assistant-using-qdrant-and-mistralai/) [Mistral.ai](http://mistral.ai/)
-- [Recipe Recommendations with Qdrant and Mistral](https://n8n.io/workflows/2333-recipe-recommendations-with-qdrant-and-mistral/)
+## 🤝 Contribution
 
-## Tips & tricks
+1. Fork le projet
+2. Créer une branche feature (`git checkout -b feature/AmazingFeature`)
+3. Commit les changements (`git commit -m 'Add AmazingFeature'`)
+4. Push vers la branche (`git push origin feature/AmazingFeature`)
+5. Ouvrir une Pull Request
 
-### Accessing local files
+## 📄 Licence
 
-The self-hosted AI starter kit will create a shared folder (by default,
-located in the same directory) which is mounted to the n8n container and
-allows n8n to access files on disk. This folder within the n8n container is
-located at `/data/shared` -- this is the path you’ll need to use in nodes that
-interact with the local filesystem.
+Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 
-**Nodes that interact with the local filesystem**
+## 🙏 Remerciements
 
-- [Read/Write Files from Disk](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.filesreadwrite/)
-- [Local File Trigger](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.localfiletrigger/)
-- [Execute Command](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executecommand/)
+- [OpenWebUI](https://github.com/open-webui/open-webui) - Interface web moderne
+- [Ollama](https://ollama.ai/) - Serveur LLM local
+- [Qdrant](https://qdrant.tech/) - Base de données vectorielle
+- [N8N](https://n8n.io/) - Automatisation des workflows
 
-## 📜 License
+---
 
-This project is licensed under the Apache License 2.0 - see the
-[LICENSE](LICENSE) file for details.
-
-## 💬 Support
-
-Join the conversation in the [n8n Forum](https://community.n8n.io/), where you
-can:
-
-- **Share Your Work**: Show off what you’ve built with n8n and inspire others
-  in the community.
-- **Ask Questions**: Whether you’re just getting started or you’re a seasoned
-  pro, the community and our team are ready to support with any challenges.
-- **Propose Ideas**: Have an idea for a feature or improvement? Let us know!
-  We’re always eager to hear what you’d like to see next.
+**🎯 Objectif** : Fournir une solution complète et prête à l'emploi pour l'IA auto-hébergée avec une configuration optimisée et une persistance des données.

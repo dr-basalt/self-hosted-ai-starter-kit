@@ -1,254 +1,210 @@
-volumes:
-  n8n_storage:
-  postgres_storage:
-  ollama_storage:
-  qdrant_storage:
-  openwebui_storage:
-  openwebui_models:
-
-networks:
-  demo:
-
-x-n8n: &service-n8n
-  image: n8nio/n8n:latest
-  networks: ['demo']
-  environment:
-    - DB_TYPE=postgresdb
-    - DB_POSTGRESDB_HOST=postgres
-    - DB_POSTGRESDB_USER=${POSTGRES_USER}
-    - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
-    - N8N_DIAGNOSTICS_ENABLED=false
-    - N8N_PERSONALIZATION_ENABLED=false
-    - N8N_ENCRYPTION_KEY
-    - N8N_USER_MANAGEMENT_JWT_SECRET
-    - OLLAMA_HOST=${OLLAMA_HOST:-ollama:11434}
-  env_file:
-    - path: .env
-      required: true
-
-x-ollama: &service-ollama
-  image: ollama/ollama:latest
-  container_name: ollama
-  networks: ['demo']
-  restart: unless-stopped
-  ports:
-    - 11434:11434
-  volumes:
-    - ollama_storage:/root/.ollama
-
-x-init-ollama: &init-ollama
-  image: ollama/ollama:latest
-  networks: ['demo']
-  container_name: ollama-pull-llama
-  volumes:
-    - ollama_storage:/root/.ollama
-  entrypoint: /bin/sh
-  environment:
-    - OLLAMA_HOST=ollama:11434
-  command:
-    - "-c"
-    - "sleep 3; ollama pull llama3.2"
+version: '3.8'
 
 services:
+  # Base de données PostgreSQL
   postgres:
-    image: postgres:16-alpine
-    hostname: postgres
-    networks: ['demo']
+    image: postgres:15
+    container_name: postgres
     restart: unless-stopped
     environment:
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-      - POSTGRES_DB
+      POSTGRES_DB: n8n
+      POSTGRES_USER: n8n
+      POSTGRES_PASSWORD: n8n
     volumes:
-      - postgres_storage:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
-      interval: 5s
-      timeout: 5s
-      retries: 10
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ai-network
 
-  n8n-import:
-    <<: *service-n8n
-    hostname: n8n-import
-    container_name: n8n-import
-    entrypoint: /bin/sh
-    command:
-      - "-c"
-      - "n8n import:credentials --separate --input=/demo-data/credentials && n8n import:workflow --separate --input=/demo-data/workflows"
-    volumes:
-      - ./n8n/demo-data:/demo-data
-    depends_on:
-      postgres:
-        condition: service_healthy
-
+  # N8N - Workflow automation
   n8n:
-    <<: *service-n8n
-    hostname: n8n
+    image: n8nio/n8n:latest
     container_name: n8n
     restart: unless-stopped
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: n8n
+      DB_POSTGRESDB_USER: n8n
+      DB_POSTGRESDB_PASSWORD: n8n
+      N8N_BASIC_AUTH_ACTIVE: true
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: admin
+      WEBHOOK_URL: http://localhost:5678
+      GENERIC_TIMEZONE: Europe/Paris
     ports:
-      - "0.0.0.0:5678:5678"
+      - "5678:5678"
     volumes:
-      - n8n_storage:/home/node/.n8n
-      - ./n8n/demo-data:/demo-data
-      - ./shared:/data/shared
+      - n8n_data:/home/node/.n8n
     depends_on:
-      postgres:
-        condition: service_healthy
-      n8n-import:
-        condition: service_completed_successfully
+      - postgres
+    networks:
+      - ai-network
 
+  # Ollama - LLM Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - ai-network
+
+  # Qdrant - Vector Database
   qdrant:
-    image: qdrant/qdrant
-    hostname: qdrant
+    image: qdrant/qdrant:latest
     container_name: qdrant
-    networks: ['demo']
     restart: unless-stopped
     ports:
-      - "0.0.0.0:6333:6333"
+      - "6333:6333"
+      - "6334:6334"
     volumes:
-      - qdrant_storage:/qdrant/storage
+      - qdrant_data:/qdrant/storage
+    networks:
+      - ai-network
 
+  # OpenWebUI - Bundle officiel avec persistance et mémoire
   openwebui:
-    build:
-      context: .
-      dockerfile: Dockerfile.openwebui
-    hostname: openwebui
+    image: ghcr.io/open-webui/open-webui:main
     container_name: openwebui
-    networks: ['demo']
     restart: unless-stopped
     ports:
-      - "0.0.0.0:3000:3000"
-      - "0.0.0.0:5001:5001"
-    volumes:
-      - openwebui_storage:/app/open-webui/data
-      - openwebui_models:/app/open-webui/models
+      - "3000:8080"
     environment:
-      - OLLAMA_API_BASE_URL=http://ollama:11434/api
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - QDRANT_HOST=qdrant
-      - QDRANT_PORT=6333
-      # Configuration de base pour OpenWebUI
-      - ENABLE_SIGNUP=true
-      - ENABLE_LOGIN_FORM=true
-      - CORS_ALLOW_ORIGIN=*
-      # Configuration HTTPS pour accès aux appareils multimédias
-      - ENABLE_HTTPS=true
-      - SSL_CERT_FILE=/app/certs/cert.pem
-      - SSL_KEY_FILE=/app/certs/key.pem
-      # Configuration STT/TTS avec OpenAI APIs (désactivée temporairement)
-      - USER_PERMISSIONS_CHAT_STT=False
-      - USER_PERMISSIONS_CHAT_TTS=False
-      - USER_PERMISSIONS_CHAT_CALL=False
-      # Configuration OpenAI API (à configurer dans .env)
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # Configuration Ollama
+      OLLAMA_API_BASE_URL: http://ollama:11434/api
+      OLLAMA_BASE_URL: http://ollama:11434
+      
+      # Configuration Qdrant pour la mémoire
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
+      QDRANT_COLLECTION: openwebui_memory
+      
+      # Configuration mémoire avec séparateur tenant
+      MEMORY_ENABLED: true
+      MEMORY_TENANT_SEPARATOR: ":"
+      MEMORY_EMBEDDING_MODEL: all-MiniLM-L6-v2
+      
+      # Configuration utilisateur
+      ENABLE_SIGNUP: true
+      ENABLE_LOGIN_FORM: true
+      CORS_ALLOW_ORIGIN: "*"
+      
+      # Configuration STT/TTS OpenAI
+      USER_PERMISSIONS_CHAT_STT: true
+      USER_PERMISSIONS_CHAT_TTS: true
+      USER_PERMISSIONS_CHAT_CALL: true
+      AUDIO_STT_ENGINE: openai
+      AUDIO_STT_MODEL: whisper-1
+      AUDIO_STT_SUPPORTED_CONTENT_TYPES: audio/wav,audio/mp3,audio/m4a,audio/webm
+      AUDIO_TTS_ENGINE: openai
+      AUDIO_TTS_MODEL: tts-1
+      AUDIO_TTS_VOICE: alloy
+      AUDIO_TTS_SPLIT_ON: punctuation
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      
+      # Configuration HTTPS avec Let's Encrypt
+      ENABLE_HTTPS: true
+      SSL_CERT_FILE: /app/certs/cert.pem
+      SSL_KEY_FILE: /app/certs/key.pem
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL:-admin@taz.infra.ori3com.cloud}
+      LETSENCRYPT_DOMAIN: ${LETSENCRYPT_DOMAIN:-taz.infra.ori3com.cloud}
+      
+      # Configuration des modèles par défaut
+      DEFAULT_MODELS: llama2,phi3,gemma2
+      DEFAULT_MODEL_SETTINGS: '{"llama2":{"temperature":0.7,"top_p":0.9,"max_tokens":2048},"phi3":{"temperature":0.8,"top_p":0.95,"max_tokens":4096},"gemma2":{"temperature":0.6,"top_p":0.85,"max_tokens":3072}}'
+      
+      # Configuration avancée
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:-your-secret-key-here}
+      WEBUI_AUTH: true
+      WEBUI_AUTH_TRUSTED_EMAIL_HEADER: X-Forwarded-Email
+      
+    volumes:
+      # Persistance des données OpenWebUI
+      - openwebui_data:/app/backend/data
+      - openwebui_uploads:/app/backend/uploads
+      - openwebui_logs:/app/backend/logs
+      # Certificats Let's Encrypt
+      - letsencrypt_certs:/app/certs
     depends_on:
+      - ollama
       - qdrant
+    networks:
+      - ai-network
 
-  ollama-cpu:
-    profiles: ["cpu"]
-    <<: *service-ollama
-
-  ollama-gpu:
-    profiles: ["gpu-nvidia"]
-    <<: *service-ollama
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-
-  ollama-gpu-amd:
-    profiles: ["gpu-amd"]
-    <<: *service-ollama
-    image: ollama/ollama:rocm
-    devices:
-      - "/dev/kfd"
-      - "/dev/dri"
-
+  # Service pour télécharger les modèles Ollama (CPU)
   ollama-pull-models-cpu:
-    profiles: ["cpu"]
     image: ollama/ollama:latest
-    networks: ['demo']
     container_name: ollama-pull-models-cpu
-    volumes:
-      - ollama_storage:/root/.ollama
-    entrypoint: /bin/sh
+    restart: "no"
     environment:
-      - OLLAMA_HOST=${OLLAMA_HOST:-ollama:11434}
-    command:
-      - "-c"
-      - |
-        sleep 10
-        ollama pull tinyllama:1.1b-chat
-        ollama pull phi3:3.8b
-        ollama pull qwen2.5:3b-instruct
-        ollama pull llama3.2:latest
-        ollama pull gemma2:2b
+      OLLAMA_HOST: ${OLLAMA_HOST:-ollama:11434}
+    command: >
+      sh -c "
+        echo 'Téléchargement des modèles pour CPU...' &&
+        ollama pull llama2 &&
+        ollama pull phi3 &&
+        ollama pull gemma2 &&
+        echo 'Modèles CPU téléchargés avec succès!'
+      "
     depends_on:
-      - ollama-cpu
+      - ollama
+    networks:
+      - ai-network
 
+  # Service pour télécharger les modèles Ollama (GPU)
   ollama-pull-models-gpu:
-    profiles: ["gpu-nvidia"]
     image: ollama/ollama:latest
-    networks: ['demo']
     container_name: ollama-pull-models-gpu
-    volumes:
-      - ollama_storage:/root/.ollama
-    entrypoint: /bin/sh
+    restart: "no"
     environment:
-      - OLLAMA_HOST=${OLLAMA_HOST:-ollama:11434}
-    command:
-      - "-c"
-      - |
-        sleep 10
-        ollama pull tinyllama:1.1b-chat
-        ollama pull phi3:3.8b
-        ollama pull qwen2.5:3b-instruct
-        ollama pull llama3.2:latest
-        ollama pull gemma2:2b
+      OLLAMA_HOST: ${OLLAMA_HOST:-ollama:11434}
+    command: >
+      sh -c "
+        echo 'Téléchargement des modèles pour GPU...' &&
+        ollama pull llama2 &&
+        ollama pull phi3 &&
+        ollama pull gemma2 &&
+        echo 'Modèles GPU téléchargés avec succès!'
+      "
     depends_on:
-      - ollama-gpu
+      - ollama
+    networks:
+      - ai-network
 
+  # Service pour télécharger les modèles Ollama (GPU AMD)
   ollama-pull-models-gpu-amd:
-    profiles: ["gpu-amd"]
-    image: ollama/ollama:rocm
-    networks: ['demo']
+    image: ollama/ollama:latest
     container_name: ollama-pull-models-gpu-amd
-    volumes:
-      - ollama_storage:/root/.ollama
-    entrypoint: /bin/sh
+    restart: "no"
     environment:
-      - OLLAMA_HOST=${OLLAMA_HOST:-ollama:11434}
-    command:
-      - "-c"
-      - |
-        sleep 10
-        ollama pull tinyllama:1.1b-chat
-        ollama pull phi3:3.8b
-        ollama pull qwen2.5:3b-instruct
-        ollama pull llama3.2:latest
-        ollama pull gemma2:2b
+      OLLAMA_HOST: ${OLLAMA_HOST:-ollama:11434}
+    command: >
+      sh -c "
+        echo 'Téléchargement des modèles pour GPU AMD...' &&
+        ollama pull llama2 &&
+        ollama pull phi3 &&
+        ollama pull gemma2 &&
+        echo 'Modèles GPU AMD téléchargés avec succès!'
+      "
     depends_on:
-      - ollama-gpu-amd
+      - ollama
+    networks:
+      - ai-network
 
-  ollama-pull-llama-cpu:
-    profiles: ["cpu"]
-    <<: *init-ollama
-    depends_on:
-      - ollama-cpu
+volumes:
+  postgres_data:
+  n8n_data:
+  ollama_data:
+  qdrant_data:
+  openwebui_data:
+  openwebui_uploads:
+  openwebui_logs:
+  letsencrypt_certs:
 
-  ollama-pull-llama-gpu:
-    profiles: ["gpu-nvidia"]
-    <<: *init-ollama
-    depends_on:
-      - ollama-gpu
-
-  ollama-pull-llama-gpu-amd:
-    profiles: [gpu-amd]
-    <<: *init-ollama
-    image: ollama/ollama:rocm
-    depends_on:
-     - ollama-gpu-amd
+networks:
+  ai-network:
+    driver: bridge
