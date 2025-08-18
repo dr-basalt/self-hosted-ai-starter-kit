@@ -73,15 +73,21 @@ configure_services() {
     case "$PROFILE" in
         "cpu")
             echo "  📥 Téléchargement des modèles CPU..."
-            docker compose run --rm ollama-pull-models-cpu
+            docker compose exec -T ollama ollama pull llama2
+            docker compose exec -T ollama ollama pull phi3
+            docker compose exec -T ollama ollama pull gemma2
             ;;
         "gpu")
             echo "  📥 Téléchargement des modèles GPU..."
-            docker compose run --rm ollama-pull-models-gpu
+            docker compose exec -T ollama ollama pull llama2
+            docker compose exec -T ollama ollama pull phi3
+            docker compose exec -T ollama ollama pull gemma2
             ;;
         "gpu-amd")
             echo "  📥 Téléchargement des modèles GPU AMD..."
-            docker compose run --rm ollama-pull-models-gpu-amd
+            docker compose exec -T ollama ollama pull llama2
+            docker compose exec -T ollama ollama pull phi3
+            docker compose exec -T ollama ollama pull gemma2
             ;;
     esac
     

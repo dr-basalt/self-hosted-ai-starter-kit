@@ -142,14 +142,8 @@ services:
     restart: "no"
     environment:
       OLLAMA_HOST: ${OLLAMA_HOST:-ollama:11434}
-    command: >
-      /bin/sh -c "
-        echo 'Téléchargement des modèles pour CPU...' &&
-        ollama pull llama2 &&
-        ollama pull phi3 &&
-        ollama pull gemma2 &&
-        echo 'Modèles CPU téléchargés avec succès!'
-      "
+    entrypoint: ["/bin/ollama"]
+    command: ["pull", "llama2"]
     depends_on:
       - ollama
     networks:
@@ -162,14 +156,8 @@ services:
     restart: "no"
     environment:
       OLLAMA_HOST: ${OLLAMA_HOST:-ollama:11434}
-    command: >
-      /bin/sh -c "
-        echo 'Téléchargement des modèles pour GPU...' &&
-        ollama pull llama2 &&
-        ollama pull phi3 &&
-        ollama pull gemma2 &&
-        echo 'Modèles GPU téléchargés avec succès!'
-      "
+    entrypoint: ["/bin/ollama"]
+    command: ["pull", "llama2"]
     depends_on:
       - ollama
     networks:
@@ -182,14 +170,8 @@ services:
     restart: "no"
     environment:
       OLLAMA_HOST: ${OLLAMA_HOST:-ollama:11434}
-    command: >
-      /bin/sh -c "
-        echo 'Téléchargement des modèles pour GPU AMD...' &&
-        ollama pull llama2 &&
-        ollama pull phi3 &&
-        ollama pull gemma2 &&
-        echo 'Modèles GPU AMD téléchargés avec succès!'
-      "
+    entrypoint: ["/bin/ollama"]
+    command: ["pull", "llama2"]
     depends_on:
       - ollama
     networks:
