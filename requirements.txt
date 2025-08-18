@@ -1,4 +1,4 @@
-# Dépendances pour OpenWebUI Memory
+# Dépendances pour OpenWebUI Memory (simplifiées)
 flask==2.3.3
 qdrant-client==1.7.0
 numpy==1.24.3
