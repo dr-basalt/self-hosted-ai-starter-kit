@@ -74,6 +74,7 @@ services:
     ports:
       - "3000:8080"
       - "80:8080"
+      - "443:8443"
     environment:
       # Configuration Ollama
       OLLAMA_API_BASE_URL: http://ollama:11434/api
@@ -113,6 +114,8 @@ services:
       SSL_KEY_FILE: /app/certs/key.pem
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL:-admin@taz.infra.ori3com.cloud}
       LETSENCRYPT_DOMAIN: ${LETSENCRYPT_DOMAIN:-taz.infra.ori3com.cloud}
+      WEBUI_PORT: 8080
+      WEBUI_HOST: 0.0.0.0
       
       # Configuration des modèles par défaut
       DEFAULT_MODELS: llama2,phi3,gemma2
