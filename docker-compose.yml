@@ -143,7 +143,7 @@ services:
     environment:
       OLLAMA_HOST: ${OLLAMA_HOST:-ollama:11434}
     command: >
-      sh -c "
+      /bin/sh -c "
         echo 'Téléchargement des modèles pour CPU...' &&
         ollama pull llama2 &&
         ollama pull phi3 &&
@@ -163,7 +163,7 @@ services:
     environment:
       OLLAMA_HOST: ${OLLAMA_HOST:-ollama:11434}
     command: >
-      sh -c "
+      /bin/sh -c "
         echo 'Téléchargement des modèles pour GPU...' &&
         ollama pull llama2 &&
         ollama pull phi3 &&
@@ -183,7 +183,7 @@ services:
     environment:
       OLLAMA_HOST: ${OLLAMA_HOST:-ollama:11434}
     command: >
-      sh -c "
+      /bin/sh -c "
         echo 'Téléchargement des modèles pour GPU AMD...' &&
         ollama pull llama2 &&
         ollama pull phi3 &&
